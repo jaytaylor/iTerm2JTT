@@ -17,8 +17,11 @@ Also generates a static website of tips.
 ```bash
 go get github.com/jaytaylor/iTerm2JTT
 
-curl -Ssl https://github.com/gnachman/iTerm2/raw/master/sources/iTermTipData.m \
-    | iTerm2JTT
+curl -sSL https://github.com/gnachman/iTerm2/raw/master/sources/iTermTipData.m \
+    | go run main.go \
+    && rsync -azve ssh \
+        public/* \
+        ${SERVER}:/var/www/${SITE}/public_html/iterm2JTT/
 ```
 
 ## License
