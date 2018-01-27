@@ -38,7 +38,7 @@ func main() {
 		errExit(err, ParsingSrcFailed)
 	}
 
-	fmt.Printf("got some tips! %+v\n", tips)
+	// fmt.Printf("got some tips! %+v\n", tips)
 
 	if err := renderSite(tips); err != nil {
 		fmt.Printf("fatal: %s\n", err)
@@ -53,27 +53,21 @@ func renderSite(tips iterm2.Tips) error {
 		return errors.New("site cannot be rendered with an empty list of tips")
 	}
 
-	if err := os.RemoveAll("public"); err != nil {
-		return fmt.Errorf("resetting directory %q: %s", "public", err)
-	}
-	if err := os.MkdirAll("public", os.FileMode(int(0755))); err != nil {
-		return fmt.Errorf("creating directory %q: %s", "public", err)
+	if err := resetPublic(); err != nil {
+		return err
 	}
 
 	homeFilePath := "public/index.html"
-
-	home, err := site.RenderHome(tips)
-	if err != nil {
-		return fmt.Errorf("rendering %q: %s", homeFilePath, err)
-	}
 
 	f, err := os.OpenFile(homeFilePath, os.O_CREATE|os.O_WRONLY, os.FileMode(int(0644)))
 	if err != nil {
 		return fmt.Errorf("opening %q: %s", homeFilePath, err)
 	}
-	if _, err = f.Write(home); err != nil {
-		return fmt.Errorf("writing %q: %s", homeFilePath, err)
+
+	if err := site.RenderHome(f, tips); err != nil {
+		return fmt.Errorf("rendering %q: %s", homeFilePath, err)
 	}
+
 	if err = f.Close(); err != nil {
 		return fmt.Errorf("closing %q: %s", homeFilePath, err)
 	}
@@ -93,17 +87,14 @@ func renderSite(tips iterm2.Tips) error {
 
 		var tipFilePath = fmt.Sprintf("public/%v.html", tip.ID)
 
-		page, err := site.RenderTip(tip, previous, next)
-		if err != nil {
-			return fmt.Errorf("rendering %q: %s", tipFilePath, err)
-		}
-
 		if f, err = os.OpenFile(tipFilePath, os.O_CREATE|os.O_WRONLY, os.FileMode(int(0644))); err != nil {
 			return fmt.Errorf("opening %q: %s", tipFilePath, err)
 		}
-		if _, err = f.Write(page); err != nil {
-			return fmt.Errorf("writing %q: %s", tipFilePath, err)
+
+		if err := site.RenderTip(f, tip, previous, next); err != nil {
+			return fmt.Errorf("rendering %q: %s", tipFilePath, err)
 		}
+
 		if err = f.Close(); err != nil {
 			return fmt.Errorf("closing %q: %s", tipFilePath, err)
 		}
@@ -112,6 +103,16 @@ func renderSite(tips iterm2.Tips) error {
 	}
 
 	fmt.Printf("rendered homepage + %v tips", len(tips))
+	return nil
+}
+
+func resetPublic() error {
+	if err := os.RemoveAll("public"); err != nil {
+		return fmt.Errorf("resetting directory %q: %s", "public", err)
+	}
+	if err := os.MkdirAll("public", os.FileMode(int(0755))); err != nil {
+		return fmt.Errorf("creating directory %q: %s", "public", err)
+	}
 	return nil
 }
 

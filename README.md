@@ -24,6 +24,12 @@ curl -sSL https://github.com/gnachman/iTerm2/raw/master/sources/iTermTipData.m \
         ${SERVER}:/var/www/${SITE}/public_html/iterm2JTT/
 ```
 
+### Dev mode
+
+```bash
+fswatch --one-per-batch --recursive --monitor=fsevents_monitor -E './pkg' | xargs -n1 bash -c 'go run main.go < ../iTermTipData.m'
+```
+
 ## License
 
 [Permissive MIT license.](LICENSE)
